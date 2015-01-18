@@ -1,8 +1,10 @@
 package com.gethashlife.hashlife;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 
 /**
  * Created by hunter on 1/17/15.
@@ -21,5 +23,12 @@ public class SMS {
         recipient = recipient.replaceAll("[^\\d.]", "");
         SmsManager smsMgr = SmsManager.getDefault();
         smsMgr.sendTextMessage(recipient, null, body, null, null);
+    }
+
+    public static String getDeviceTelephoneNumber(Context context) {
+        TelephonyManager tMgr =(TelephonyManager)context.getSystemService(Context.TELEPHONY_SERVICE);
+        String mPhoneNumber = tMgr.getLine1Number();
+        mPhoneNumber = mPhoneNumber.replaceAll("[^\\d.]", "");
+        return mPhoneNumber;
     }
 }

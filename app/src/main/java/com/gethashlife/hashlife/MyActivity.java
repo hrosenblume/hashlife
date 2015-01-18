@@ -2,27 +2,19 @@ package com.gethashlife.hashlife;
 
 import android.app.Activity;
 import android.content.ContentResolver;
-import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.ContactsContract;
-import android.telephony.TelephonyManager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.loopj.android.http.JsonHttpResponseHandler;
-
-import org.apache.http.Header;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.security.PrivateKey;
@@ -95,33 +87,7 @@ public class MyActivity extends Activity {
     public void registerDevice() throws JSONException {
         Toast.makeText(getApplicationContext(), (String) "Currently Registering Device",
                 Toast.LENGTH_LONG).show();
-        SMS.sendMessage("571-212-5535", "This message will register my device.");
-
-        String requestString = "/register?phone=" + getDeviceTelephoneNumber() + "&" + "pkey=" + "123456"
-                + "&" + "code=" + "123456";
-        VerifyRestClient.get(requestString, null, new JsonHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("FYREBUG", "we got here JSONObject");
-                try {
-                    String responseText = (String) response.get("0");
-                    Log.d("FYREBUG", responseText);
-                } catch (Exception e) {
-                    Log.d("FYREBUG", "ERROR: SOMETHING WITH JSONObject");
-                }
-            }
-
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONArray timeline) {
-                Log.d("FYREBUG", "we got here JSONArray");
-            }
-
-            @Override
-            public void onFailure(int a, Header[] h, Throwable e, JSONObject o) {
-                Toast.makeText(getApplicationContext(), (String) "Failed to register with server.",
-                        Toast.LENGTH_LONG).show();
-            }
-        });
+        SMS.sendMessage("347-269-2418", "This message will register my device.");
     }
 
     private void convertAndSetKeys() {
@@ -134,12 +100,5 @@ public class MyActivity extends Activity {
         PrivateKey privateKeyObject = Encryption.getPrivateKey();
         byte[] privateKeyArray = privateKeyObject.getEncoded();
         privateKeyString = new String(privateKeyArray);
-    }
-
-    public String getDeviceTelephoneNumber() {
-        TelephonyManager tMgr =(TelephonyManager)this.getSystemService(Context.TELEPHONY_SERVICE);
-        String mPhoneNumber = tMgr.getLine1Number();
-        mPhoneNumber = mPhoneNumber.replaceAll("[^\\d.]", "");
-        return mPhoneNumber;
     }
 }
