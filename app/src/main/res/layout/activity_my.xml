@@ -19,7 +19,13 @@
     <Button
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:text="Pick Contact"
+        android:text="Share"
         android:onClick="pickContact" />
+
+    <Button
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:text="Read"
+        android:onClick="openFileExplorer" />
 
 </LinearLayout>

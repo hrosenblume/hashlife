@@ -11,6 +11,7 @@ import com.loopj.android.http.JsonHttpResponseHandler;
 
 import org.apache.http.Header;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -34,18 +35,20 @@ public class SmsReceiver extends BroadcastReceiver {
         }
     }
 
-    private void registerWithNetwork(Context context, String code) {
-        String requestString = "/register?phone=" + SMS.getDeviceTelephoneNumber(context) + "&" + "pkey=" + "123456"
+    private void registerWithNetwork(final Context context, String code) {
+        String requestString = "/register?phone=" + SMS.getDeviceTelephoneNumber(context) + "&" + "pkey=" + Encryption.getPublicKeyString()
                 + "&" + "code=" + code;
         Log.d("FYREBUG", requestString);
         VerifyRestClient.get(requestString, null, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                Log.d("FYREBUG", "we got here JSONObject");
                 try {
                     String responseText = (String) response.get("0");
                     Log.d("FYREBUG", "RESPONSE FROM SERVER: " + responseText);
-                } catch (Exception e) {
+                    Intent i = new Intent(context, MyActivity.class);
+                    i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(i);
+                } catch (JSONException e) {
                     Log.d("FYREBUG", "ERROR: SOMETHING WITH JSONObject");
                 }
             }

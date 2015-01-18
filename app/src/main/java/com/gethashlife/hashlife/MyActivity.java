@@ -6,38 +6,37 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.provider.ContactsContract;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.loopj.android.http.JsonHttpResponseHandler;
+
+import org.apache.http.Header;
+import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 
 
 public class MyActivity extends Activity {
     private static int CONTACT_PICKER_RESULT = 0;
+    private static final int FILE_PICKER_TO_ENCODE_RESULT = 1;
+    private static final int FILE_PICKER_TO_DECODE_RESULT = 2;
     private String Name, Number;
     private String publicKeyString, privateKeyString;
+    private boolean isRegistered = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
-        File file = new File(Environment.getExternalStorageDirectory() + File.separator + "test.jpg");
-        convertAndSetKeys();
 
-        try {
-            registerDevice();
-        } catch (Exception e) {
-            System.out.println(e);
-        }
     }
 
     public void pickContact(View view) {
@@ -46,6 +45,17 @@ public class MyActivity extends Activity {
         startActivityForResult(intent, CONTACT_PICKER_RESULT);
     }
 
+    public void openFileExplorer(View view) {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("file/*");
+        startActivityForResult(intent,FILE_PICKER_TO_DECODE_RESULT);
+    }
+
+    private void openFileExplorer() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("file/*");
+        startActivityForResult(intent,FILE_PICKER_TO_ENCODE_RESULT);
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -77,28 +87,59 @@ public class MyActivity extends Activity {
             do {
                 String name = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));
                 String number = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                number = number.replaceAll("[^\\d.]", "");
                 Name = name;
                 Number = number;
                 resultTextView.setText(Name + " : " + Number);
             } while (cursor.moveToNext());
+            getPublicKey();
+        }else if ((requestCode == FILE_PICKER_TO_ENCODE_RESULT) && (resultCode == RESULT_OK)) {
+            Log.d("FYREBUG", "THIS IS IT BABY");
+            String filePath = data.getData().getPath();
+            Log.d("FYREBUG", filePath);
+            File file = new File(filePath);
+            Encryption.encryptTestFile(file);
+            Log.d("FYREBUG", "inc");
+        } else if ((requestCode == FILE_PICKER_TO_DECODE_RESULT) && (resultCode == RESULT_OK)) {
+            Log.d("FYREBUG", "THIS IS IT BABY");
+            String filePath = data.getData().getPath();
+            Log.d("FYREBUG", filePath);
+            File file = new File(filePath);
+            Encryption.decryptTestFile(file);
+            Log.d("FYREBUG", "dec");
         }
     }
 
-    public void registerDevice() throws JSONException {
-        Toast.makeText(getApplicationContext(), (String) "Currently Registering Device",
-                Toast.LENGTH_LONG).show();
-        SMS.sendMessage("347-269-2418", "This message will register my device.");
+    private void getPublicKey() {
+        String requestString = "/getkey?phone=" + Number;
+        Log.d("FYREBUG", requestString);
+        VerifyRestClient.get(requestString, null, new JsonHttpResponseHandler() {
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                try {
+                    String publicKeyResponse = (String) response.get("0");
+                    publicKeyResponse = publicKeyResponse.replace(" ","+").trim();
+                    Encryption.setOtherUserPublicKey(publicKeyResponse);
+                    openFileExplorer();
+                    Log.d("FYREBUG", "RESPONSE FROM SERVER: " + publicKeyResponse);
+                    Log.d("FYREBUG", "Encrypted Response From Server: " + Encryption.stringToPublicKey(publicKeyResponse).getEncoded());
+                } catch (JSONException e) {
+                    Log.d("FYREBUG", "ERROR: SOMETHING WITH JSONObject");
+                }
+            }
+
+            @Override
+            public void onSuccess(int statusCode, Header[] headers, JSONArray timeline) {
+                Log.d("FYREBUG", "we got here JSONArray");
+            }
+
+            @Override
+            public void onFailure(int a, Header[] h, Throwable e, JSONObject o) {
+                Toast.makeText(getApplicationContext(), (String) "Failed to get the public key.",
+                        Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
-    private void convertAndSetKeys() {
-        Encryption.generateKeys();
 
-        PublicKey publicKeyObject = Encryption.getPublicKey();
-        byte[] publicKeyArray = publicKeyObject.getEncoded();
-        publicKeyString = new String(publicKeyArray);
-
-        PrivateKey privateKeyObject = Encryption.getPrivateKey();
-        byte[] privateKeyArray = privateKeyObject.getEncoded();
-        privateKeyString = new String(privateKeyArray);
-    }
 }
