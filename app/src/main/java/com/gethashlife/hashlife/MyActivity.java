@@ -9,9 +9,7 @@ import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.loopj.android.http.JsonHttpResponseHandler;
@@ -36,7 +34,6 @@ public class MyActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my);
-
     }
 
     public void pickContact(View view) {
@@ -59,24 +56,13 @@ public class MyActivity extends Activity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.my, menu);
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        TextView resultTextView = (TextView) findViewById(R.id.result);
         if ((requestCode == CONTACT_PICKER_RESULT) && (resultCode == RESULT_OK)) {
             Uri uri = data.getData();
             ContentResolver cr = getContentResolver();
@@ -90,29 +76,27 @@ public class MyActivity extends Activity {
                 number = number.replaceAll("[^\\d.]", "");
                 Name = name;
                 Number = number;
-                resultTextView.setText(Name + " : " + Number);
             } while (cursor.moveToNext());
             getPublicKey();
         }else if ((requestCode == FILE_PICKER_TO_ENCODE_RESULT) && (resultCode == RESULT_OK)) {
-            Log.d("FYREBUG", "THIS IS IT BABY");
             String filePath = data.getData().getPath();
-            Log.d("FYREBUG", filePath);
             File file = new File(filePath);
             Encryption.encryptTestFile(file);
-            Log.d("FYREBUG", "inc");
         } else if ((requestCode == FILE_PICKER_TO_DECODE_RESULT) && (resultCode == RESULT_OK)) {
-            Log.d("FYREBUG", "THIS IS IT BABY");
             String filePath = data.getData().getPath();
-            Log.d("FYREBUG", filePath);
             File file = new File(filePath);
             Encryption.decryptTestFile(file);
-            Log.d("FYREBUG", "dec");
+            try {
+                FileOpen.openFile(getApplicationContext(), file);
+            } catch (Exception e) {
+
+            }
+
         }
     }
 
     private void getPublicKey() {
         String requestString = "/getkey?phone=" + Number;
-        Log.d("FYREBUG", requestString);
         VerifyRestClient.get(requestString, null, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
@@ -121,8 +105,6 @@ public class MyActivity extends Activity {
                     publicKeyResponse = publicKeyResponse.replace(" ","+").trim();
                     Encryption.setOtherUserPublicKey(publicKeyResponse);
                     openFileExplorer();
-                    Log.d("FYREBUG", "RESPONSE FROM SERVER: " + publicKeyResponse);
-                    Log.d("FYREBUG", "Encrypted Response From Server: " + Encryption.stringToPublicKey(publicKeyResponse).getEncoded());
                 } catch (JSONException e) {
                     Log.d("FYREBUG", "ERROR: SOMETHING WITH JSONObject");
                 }
@@ -130,7 +112,7 @@ public class MyActivity extends Activity {
 
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONArray timeline) {
-                Log.d("FYREBUG", "we got here JSONArray");
+                Log.d("FYREBUG", "we hit success");
             }
 
             @Override
